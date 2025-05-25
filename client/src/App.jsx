@@ -1,19 +1,35 @@
-import { Button, Stack } from 'react-bootstrap';
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import Home from "./pages/home";
+import Registration from "./pages/Registration";
+import Login from "./pages/Login";
+import NotFound from "./pages/NotFound";
+import Users from "./pages/Users";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Home/>
+  },
+  {
+    path: "/registration",
+    element: <Registration/>
+  },
+  {
+    path: "/login",
+    element: <Login/>
+  },
+  {
+    path: "/users",
+    element: <Users/>
+  },
+  {
+    path: "*",
+    element: <NotFound/>
+  }
+])
 
 function App() {
-  return (
-    <>
-      <Stack direction="horizontal" gap={2}>
-        <Button as="a" variant="primary">
-          Button as link
-        </Button>
-        <Button as="a" variant="success">
-          Button as link
-          <i class="bi bi-alarm"></i> 
-        </Button>
-      </Stack>
-    </>
-  )
+  return <RouterProvider router={router}></RouterProvider>
 }
 
 export default App
