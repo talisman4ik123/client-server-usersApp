@@ -1,4 +1,5 @@
 const db = require("../db");
+const uuid = require("uuid");
 
 class Contrroler {
     async registration(req, res) {
@@ -26,6 +27,69 @@ class Contrroler {
             return res
                 .status(200)
                 .json({ message: "registration was successful" });
+        } catch (error) {
+            console.error(`server error: ${error}`);
+            return res.status(500).json({ message: "Server error!" });
+        }
+    }
+
+    async login(req, res) {
+        try {
+            const { email, password } = req.body;
+            const user = await db.query("SELECT * FROM users WHERE email=$1", [
+                email,
+            ]);
+
+            if (!user.rows[0]) {
+                console.log(`User with email ${email} doesn't exist`);
+                return res.status(400).json({
+                    message: `User with email ${email} doesn't exist!`,
+                });
+            }
+
+            if (user.rows[0].password != password) {
+                console.log(`Password is not correct`);
+                return res.status(400).json({
+                    message: `Password is not correct!`,
+                });
+            }
+
+            if (user.rows[0].status == "block") {
+                console.log(`"User with email ${email} is blocked`);
+                return res.status(400).json({
+                    message: `User with email ${email} is blocked!`,
+                });
+            }
+
+            const sessia = uuid.v4();
+            await db.query(
+                "INSERT INTO sessions (sessia, user_id) values ($1, $2)",
+                [sessia, user.rows[0].id]
+            );
+
+            res.cookie("sessia", sessia, {
+                httpOnly: true,
+            });
+
+            await db.query("UPDATE users SET log_date=$1 WHERE email=$2", [
+                formatCurrentDate(),
+                email,
+            ]);
+
+            return res.json({
+                name: user.rows[0].name,
+                email,
+            });
+        } catch (error) {
+            console.error(`server error: ${error}`);
+            return res.status(500).json({ message: "Server error!" });
+        }
+    }
+
+    async getAllUsers(req, res) {
+        try {
+            const users = await db.query("SELECT * FROM users order by id");
+            return res.json(users.rows);
         } catch (error) {
             console.error(`server error: ${error}`);
             return res.status(500).json({ message: "Server error!" });
