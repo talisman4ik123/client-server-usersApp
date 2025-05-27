@@ -36,3 +36,7 @@
 .text-small {
     font-size: 14px;
 }
+
+.text-max-width {
+    max-width: 300px;
+}

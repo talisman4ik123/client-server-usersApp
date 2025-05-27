@@ -127,7 +127,7 @@ function Registration() {
                     </Button>
 
                     {error && <p className="text-danger">{error}</p>}
-                    {countdown !== null && <p className="text-success fw-semibold">Registration successful! You will be redirected to the login page in: {countdown}</p>}
+                    {countdown !== null && <p className="text-success fw-semibold text-max-width text-center">Registration successful! You will be redirected to the login page in: {countdown}</p>}
                 </Form>
 
                 <div className="d-flex justify-content-between max-width">
