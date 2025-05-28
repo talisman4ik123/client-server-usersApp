@@ -3,6 +3,8 @@ const initialState = {
     users: [],
     loading: false,
     error: null,
+    updateLoading: false,
+    updateError: null,
 };
 
 export default function usersReducer(state = initialState, action) {
@@ -43,6 +45,25 @@ export default function usersReducer(state = initialState, action) {
                     ...user,
                     selected: action.payload,
                 })),
+            };
+        }
+        case "users/fetchUpdateUsers": {
+            return { ...state, updateLoading: true, updateError: null };
+        }
+
+        case "users/fetchUpdateSuccess": {
+            return {
+                ...state,
+                updateLoading: false,
+                users: action.payload,
+            };
+        }
+
+        case "users/fetchUpdateError": {
+            return {
+                ...state,
+                updateLoading: false,
+                updateError: action.payload,
             };
         }
 

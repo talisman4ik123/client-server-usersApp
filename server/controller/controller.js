@@ -1,7 +1,7 @@
 const db = require("../db");
 const uuid = require("uuid");
 
-class Contrroler {
+class Controller {
     async registration(req, res) {
         try {
             const { name, email, password } = req.body;
@@ -134,7 +134,7 @@ class Contrroler {
             );
 
             // Получаем обновленных пользователей
-            const users = await db.query("SELECT * FROM users");
+            const users = await db.query("SELECT * FROM users order by id");
 
             return res.json(users.rows);
         } catch (error) {
@@ -162,4 +162,4 @@ function formatCurrentDate() {
     return `${datePart} ${timePart}`;
 }
 
-module.exports = new Contrroler();
+module.exports = new Controller();

@@ -15,10 +15,53 @@ function Users() {
     const loading = useSelector(state => state.usersData.loading);
     const currentUser = useSelector(state => state.usersData.currentUser);
     const users = useSelector(state => state.usersData.users);
+
+    const updateError = useSelector(state => state.usersData.updateError);
+    const updateLoading = useSelector(state => state.usersData.updateLoading);
+
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const [checked, setChecked] = useState(false);
+
+    function getSelectedId() {
+        return users.filter(user => user.selected).map(user => user.id);
+    }
+
+    const handleBlock = async () => {
+        const ids = getSelectedId();
+
+        if (ids.length === 0 ) {
+            dispatch({type: "users/fetchUpdateError", payload: "Users are not selected!"})
+        } else {
+            
+            dispatch({type: "users/fetchUpdateUsers"});
+
+            try {
+                const response = await fetch("http://localhost:5000/api/block", {
+                    method: "PATCH",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ids}),
+                    credentials: "include"
+                });
+
+                if (!response.ok || response.status === 401) {
+                    const errorData = await response.json();
+                    dispatch({type: "users/fetchUpdateError", payload: errorData.message});
+                } else if (ids.includes(currentUser.id)) {
+                    // Выполняем разлогин и редирект
+                    await handleLogout();
+                    return;
+                } else {
+                    const data = await response.json();
+                    dispatch({ type: "users/fetchUpdateSuccess", payload: data });
+                }
+                
+            } catch (error) {
+                dispatch({type: "users/fetchUpdateError", payload: error.message});
+            }
+        }
+    }
 
     const handleLogout = async () => {
         dispatch({type: "users/clearState"});
@@ -90,19 +133,32 @@ function Users() {
                     <Title>Users list</Title>
 
                     <div className="mb-2">
-                        <Button variant="info" className="me-2 text-light">
+                        <Button disabled={updateLoading} variant="info" className="me-2 text-light">
                             <span className="me-1">delete</span>
                             <i className="bi bi-trash"></i>
                         </Button>
-                        <Button variant="info" className="me-2 text-light">
+                        <Button onClick={handleBlock} disabled={updateLoading} variant="info" className="me-2 text-light">
                             <span className="me-1">block</span>
                             <i className="bi bi-ban"></i>
                         </Button>
-                        <Button variant="info" className="text-light">
+                        <Button disabled={updateLoading} variant="info" className="text-light">
                             <span>unblock</span>
                         </Button>
                     </div>
 
+                    {updateLoading && (
+                        <div className="mb-2">
+                            <span>Loading...</span>
+                            <div className="spinner-border-sm spinner-border ms-2" role="status">
+                                <span className="visually-hidden">Loading...</span>
+                            </div>
+                        </div>)}
+                    
+                    {updateError && (
+                        <div className="mb-2">
+                            <span className="text-danger fs-5">{updateError}</span>
+                        </div>
+                    )}
                     <Table striped bordered hover className="mb-2">
                         <thead>
                             <tr className="align-middle text-center fst-italic text-small">
@@ -111,7 +167,7 @@ function Users() {
                                         <span className="mb-1">check/uncheck all</span>
                                         <InputGroup className="d-flex justify-content-center">
                                             <InputGroup.Checkbox 
-                                                checked={checked} 
+                                                checked={checked ?? false} 
                                                 onChange={handleSelectedAll} 
                                                 aria-label="Checkbox for following text input" />
                                         </InputGroup>
@@ -133,17 +189,17 @@ function Users() {
                                     <td>
                                         <InputGroup className="d-flex justify-content-center">
                                             <InputGroup.Checkbox 
-                                                checked={user.selected} 
+                                                checked={user.selected ?? false} 
                                                 onChange={() => handleSelected(user.id)} 
                                                 aria-label="Checkbox for following text input" />
                                         </InputGroup>
                                     </td>
-                                    <td>{user.id}</td>
-                                    <td>{user.name}</td>
-                                    <td>{user.email}</td>
-                                    <td>{user.reg_date}</td>
-                                    <td>{user.log_date}</td>
-                                    <td>{user.status}</td>
+                                    <td className={`${user.status === "block" && "text-danger fst-italic"}`}>{user.id}</td>
+                                    <td className={`${user.status === "block" && "text-danger fst-italic"}`}>{user.name}</td>
+                                    <td className={`${user.status === "block" && "text-danger fst-italic"}`}>{user.email}</td>
+                                    <td className={`${user.status === "block" && "text-danger fst-italic"}`}>{user.reg_date}</td>
+                                    <td className={`${user.status === "block" && "text-danger fst-italic"}`}>{user.log_date}</td>
+                                    <td className={`${user.status === "block" && "text-danger fst-italic"}`}>{user.status}</td>
                                 </tr>
                             ))}
                         </tbody>
