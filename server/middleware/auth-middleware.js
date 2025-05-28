@@ -36,6 +36,7 @@ module.exports = async function authMiddleware(req, res, next) {
         }
 
         // Если всё хорошо, передаём управление дальше
+        req.user = sessiaDb.rows[0].user_id;
         next();
     } catch (err) {
         console.error("authMiddleware error:", err);

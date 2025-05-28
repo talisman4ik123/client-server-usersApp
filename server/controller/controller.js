@@ -76,10 +76,21 @@ class Contrroler {
                 email,
             ]);
 
-            return res.json({
-                name: user.rows[0].name,
-                email,
-            });
+            return res.status(200).json({ message: "Login successful!" });
+        } catch (error) {
+            console.error(`server error: ${error}`);
+            return res.status(500).json({ message: "Server error!" });
+        }
+    }
+
+    async logout(req, res) {
+        try {
+            const sessia = req.cookies.sessia;
+            await db.query("DELETE FROM sessions WHERE sessia=$1", [sessia]);
+
+            res.clearCookie("sessia");
+
+            return res.status(200).json({ message: "Logout successful!" });
         } catch (error) {
             console.error(`server error: ${error}`);
             return res.status(500).json({ message: "Server error!" });
@@ -88,7 +99,43 @@ class Contrroler {
 
     async getAllUsers(req, res) {
         try {
+            const user = await db.query("SELECT * FROM users WHERE id=$1", [
+                req.user,
+            ]);
             const users = await db.query("SELECT * FROM users order by id");
+            return res.json({
+                currentUser: {
+                    id: user.rows[0].id,
+                    name: user.rows[0].name,
+                    email: user.rows[0].email,
+                },
+                users: users.rows,
+            });
+        } catch (error) {
+            console.error(`server error: ${error}`);
+            return res.status(500).json({ message: "Server error!" });
+        }
+    }
+
+    async blockSelectedUsers(req, res) {
+        try {
+            const { ids } = req.body; // ожидается массив id
+
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return res
+                    .status(400)
+                    .json({ message: "Invalid or empty ids array" });
+            }
+
+            // Обновляем статус пользователей с указанными id
+            await db.query(
+                "UPDATE users SET status = 'block' WHERE id = ANY($1)",
+                [ids]
+            );
+
+            // Получаем обновленных пользователей
+            const users = await db.query("SELECT * FROM users");
+
             return res.json(users.rows);
         } catch (error) {
             console.error(`server error: ${error}`);

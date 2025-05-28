@@ -1,4 +1,5 @@
 const initialState = {
+    currentUser: {},
     users: [],
     loading: false,
     error: null,
@@ -10,13 +11,40 @@ export default function usersReducer(state = initialState, action) {
             return { ...state, loading: true, error: null };
 
         case "users/fetchSuccess":
-            return { ...state, loading: false, users: action.payload };
+            return {
+                ...state,
+                loading: false,
+                currentUser: action.payload.currentUser,
+                users: action.payload.users,
+            };
 
         case "users/fetchError":
             return { ...state, loading: false, error: action.payload };
 
         case "users/clearState":
             return initialState;
+
+        case "users/selectUser": {
+            const { users } = state;
+            return {
+                ...state,
+                users: users.map((user) =>
+                    user.id == action.payload
+                        ? { ...user, selected: !user.selected }
+                        : user
+                ),
+            };
+        }
+        case "users/selectAllUsers": {
+            const { users } = state;
+            return {
+                ...state,
+                users: users.map((user) => ({
+                    ...user,
+                    selected: action.payload,
+                })),
+            };
+        }
 
         default:
             return state;
@@ -42,6 +70,7 @@ export function getAllUsers() {
                 });
             } else {
                 const data = await response.json();
+                data.users.map((user) => (user.selected = false));
                 dispatch({ type: "users/fetchSuccess", payload: data });
             }
         } catch (error) {
