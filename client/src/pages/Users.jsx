@@ -63,6 +63,71 @@ function Users() {
         }
     }
 
+    const handleDelete = async () => {
+        const ids = getSelectedId();
+
+        if (ids.length === 0 ) {
+            dispatch({type: "users/fetchUpdateError", payload: "Users are not selected!"})
+        } else {
+            
+            dispatch({type: "users/fetchUpdateUsers"});
+
+            try {
+                const response = await fetch("http://localhost:5000/api/delete", {
+                    method: "DELETE",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ids}),
+                    credentials: "include"
+                });
+
+                if (!response.ok || response.status === 401) {
+                    const errorData = await response.json();
+                    dispatch({type: "users/fetchUpdateError", payload: errorData.message});
+                } else if (ids.includes(currentUser.id)) {
+                    // Выполняем разлогин и редирект
+                    await handleLogout();
+                    return;
+                } else {
+                    const data = await response.json();
+                    dispatch({ type: "users/fetchUpdateSuccess", payload: data });
+                }
+                
+            } catch (error) {
+                dispatch({type: "users/fetchUpdateError", payload: error.message});
+            }
+        }
+    }
+
+    const handleUnblock = async () => {
+        const ids = getSelectedId();
+
+        if (ids.length === 0 ) {
+            dispatch({type: "users/fetchUpdateError", payload: "Users are not selected!"})
+        } else {
+            dispatch({type: "users/fetchUpdateUsers"});
+
+            try {
+                const response = await fetch("http://localhost:5000/api/unblock", {
+                    method: "PATCH",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ids}),
+                    credentials: "include"
+                });
+
+                if (!response.ok || response.status === 401) {
+                    const errorData = await response.json();
+                    dispatch({type: "users/fetchUpdateError", payload: errorData.message});
+                } else {
+                    const data = await response.json();
+                    dispatch({ type: "users/fetchUpdateSuccess", payload: data });
+                }
+                
+            } catch (error) {
+                dispatch({type: "users/fetchUpdateError", payload: error.message});
+            }
+        }
+    }
+
     const handleLogout = async () => {
         dispatch({type: "users/clearState"});
         try {
@@ -95,7 +160,7 @@ function Users() {
 
     useEffect(() => {
         dispatch(getAllUsers());
-    }, [])
+    }, [dispatch])
 
     if (error) {
         return (
@@ -133,7 +198,7 @@ function Users() {
                     <Title>Users list</Title>
 
                     <div className="mb-2">
-                        <Button disabled={updateLoading} variant="info" className="me-2 text-light">
+                        <Button onClick={handleDelete} disabled={updateLoading} variant="info" className="me-2 text-light">
                             <span className="me-1">delete</span>
                             <i className="bi bi-trash"></i>
                         </Button>
@@ -141,7 +206,7 @@ function Users() {
                             <span className="me-1">block</span>
                             <i className="bi bi-ban"></i>
                         </Button>
-                        <Button disabled={updateLoading} variant="info" className="text-light">
+                        <Button onClick={handleUnblock} disabled={updateLoading} variant="info" className="text-light">
                             <span>unblock</span>
                         </Button>
                     </div>

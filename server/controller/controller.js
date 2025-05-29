@@ -142,6 +142,58 @@ class Controller {
             return res.status(500).json({ message: "Server error!" });
         }
     }
+
+    async unblockSelectedUsers(req, res) {
+        try {
+            const { ids } = req.body;
+
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return res
+                    .status(400)
+                    .json({ message: "Invalid or empty ids array" });
+            }
+
+            // Обновляем статус пользователей с указанными id
+            await db.query(
+                "UPDATE users SET status = 'active' WHERE id = ANY($1)",
+                [ids]
+            );
+
+            // Получаем обновленных пользователей
+            const users = await db.query("SELECT * FROM users order by id");
+
+            return res.json(users.rows);
+        } catch (error) {
+            console.error(`server error: ${error}`);
+            return res.status(500).json({ message: "Server error!" });
+        }
+    }
+
+    async deleteSelectedUsers(req, res) {
+        try {
+            const { ids } = req.body;
+
+            if (!Array.isArray(ids) || ids.length === 0) {
+                return res
+                    .status(400)
+                    .json({ message: "Invalid or empty ids array" });
+            }
+
+            // Обновляем статус пользователей с указанными id
+            await db.query("DELETE FROM sessions WHERE user_id = ANY($1)", [
+                ids,
+            ]);
+            await db.query("DELETE FROM users WHERE id = ANY($1)", [ids]);
+
+            // Получаем обновленных пользователей
+            const users = await db.query("SELECT * FROM users order by id");
+
+            return res.json(users.rows);
+        } catch (error) {
+            console.error(`server error: ${error}`);
+            return res.status(500).json({ message: "Server error!" });
+        }
+    }
 }
 
 function formatCurrentDate() {
